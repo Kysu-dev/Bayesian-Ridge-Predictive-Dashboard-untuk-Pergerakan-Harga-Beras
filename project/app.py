@@ -267,11 +267,29 @@ def add_actual():
 
 @app.route('/api/reset_actual', methods=['POST'])
 def reset_actual():
+    data = request.json or {}
+    month_val = data.get('month')
+    
     if os.path.exists(ADDITIONAL_DATA_PATH):
         try:
-            os.remove(ADDITIONAL_DATA_PATH)
-            load_model_and_data()
-            return jsonify({"message": "Semua data suntikan berhasil dihapus. Model kembali ke versi awal!"})
+            if month_val:
+                dt = datetime.datetime.strptime(month_val, "%Y-%m")
+                inject_date = dt.replace(day=1).strftime("%Y-%m-%d")
+                
+                df_add = pd.read_csv(ADDITIONAL_DATA_PATH)
+                df_filtered = df_add[df_add['Date_Param'] != inject_date]
+                
+                if len(df_filtered) == 0:
+                    os.remove(ADDITIONAL_DATA_PATH)
+                else:
+                    df_filtered.to_csv(ADDITIONAL_DATA_PATH, index=False)
+                
+                load_model_and_data()
+                return jsonify({"message": f"Data suntikan untuk bulan {month_val} berhasil dihapus."})
+            else:
+                os.remove(ADDITIONAL_DATA_PATH)
+                load_model_and_data()
+                return jsonify({"message": "Semua data suntikan berhasil dihapus. Model kembali ke versi awal!"})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
     return jsonify({"message": "Tidak ada data suntikan yang perlu dihapus."})

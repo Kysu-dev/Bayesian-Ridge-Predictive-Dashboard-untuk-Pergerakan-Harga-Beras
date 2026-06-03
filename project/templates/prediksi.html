@@ -129,14 +129,24 @@
     });
 
     document.getElementById('reset-data-btn').addEventListener('click', function(e) {
-        if(!confirm('Yakin ingin menghapus SEMUA data aktual yang telah disuntikkan? (Model akan kembali seperti semula)')) return;
+        const month = document.getElementById('inject-month').value;
+        if(!month) {
+            alert('Pilih bulan terlebih dahulu pada dropdown untuk menghapus data suntikan khusus bulan tersebut!');
+            return;
+        }
+        
+        if(!confirm(`Yakin ingin menghapus data aktual yang disuntikkan untuk bulan ${month}?`)) return;
         
         const btn = this;
         const origText = btn.innerText;
         btn.innerText = 'Menghapus...';
         btn.disabled = true;
         
-        fetch('/api/reset_actual', { method: 'POST' })
+        fetch('/api/reset_actual', { 
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({month: month})
+        })
         .then(res => res.json())
         .then(data => {
             alert(data.message || data.error);
