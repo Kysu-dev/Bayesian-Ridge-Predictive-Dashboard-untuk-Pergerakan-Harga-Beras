@@ -13,7 +13,13 @@
         <div class="custom-card h-100">
             <div class="card-title-sm">Prediksi Bulan Depan</div>
             <div class="card-value" id="val-pred">Rp {{ "{:,.0f}".format(pred).replace(',', '.') }}</div>
+            {% if pred_change > 0 %}
             <small class="text-up">↑ +{{ pred_change }}% ({{ pred_month }})</small>
+            {% elif pred_change < 0 %}
+            <small class="text-down">↓ -{{ pred_change|abs }}% ({{ pred_month }})</small>
+            {% else %}
+            <small class="text-muted">- {{ pred_change }}% ({{ pred_month }})</small>
+            {% endif %}
         </div>
     </div>
     <div class="col-md-3 mb-3 mb-md-0">
