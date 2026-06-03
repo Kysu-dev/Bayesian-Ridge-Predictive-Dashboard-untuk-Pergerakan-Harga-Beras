@@ -40,6 +40,7 @@
                 </select>
                 <input type="number" id="inject-price" class="form-control" placeholder="Cth: 15750 (tanpa titik)" step="any" required>
                 <button type="submit" class="btn btn-success px-4">Suntik</button>
+                <button type="button" id="reset-data-btn" class="btn btn-outline-danger px-4">Reset</button>
             </form>
         </div>
         
@@ -119,6 +120,27 @@
             alert(data.message || data.error);
             if(!data.error) {
                 // Reload to refresh charts and everything with new data
+                window.location.reload();
+            } else {
+                btn.innerText = origText;
+                btn.disabled = false;
+            }
+        });
+    });
+
+    document.getElementById('reset-data-btn').addEventListener('click', function(e) {
+        if(!confirm('Yakin ingin menghapus SEMUA data aktual yang telah disuntikkan? (Model akan kembali seperti semula)')) return;
+        
+        const btn = this;
+        const origText = btn.innerText;
+        btn.innerText = 'Menghapus...';
+        btn.disabled = true;
+        
+        fetch('/api/reset_actual', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || data.error);
+            if(!data.error) {
                 window.location.reload();
             } else {
                 btn.innerText = origText;

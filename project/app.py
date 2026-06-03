@@ -265,5 +265,16 @@ def add_actual():
         
     return jsonify({"message": "Berhasil menyuntikkan data aktual baru. Model telah diperbarui!"})
 
+@app.route('/api/reset_actual', methods=['POST'])
+def reset_actual():
+    if os.path.exists(ADDITIONAL_DATA_PATH):
+        try:
+            os.remove(ADDITIONAL_DATA_PATH)
+            load_model_and_data()
+            return jsonify({"message": "Semua data suntikan berhasil dihapus. Model kembali ke versi awal!"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    return jsonify({"message": "Tidak ada data suntikan yang perlu dihapus."})
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
