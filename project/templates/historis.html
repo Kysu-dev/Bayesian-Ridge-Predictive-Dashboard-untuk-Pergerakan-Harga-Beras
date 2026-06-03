@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="custom-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Visualisasi Data Historis (Seluruh Waktu)</h5>
+    </div>
+    <div class="chart-container-sm">
+        <canvas id="historisChart"></canvas>
+    </div>
+</div>
+
+<div class="custom-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Tabel Data Aktual vs Prediksi Model</h5>
+        <div class="d-flex gap-2">
+            <select id="year-filter" class="form-select form-select-sm" style="width: 120px;">
+                <option value="all">Semua Tahun</option>
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+            </select>
+            <button class="btn btn-sm btn-outline-secondary">Export CSV</button>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover table-custom" id="historyTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Bulan ↕</th>
+                    <th onclick="sortTable(1)">Harga Aktual (Rp) ↕</th>
+                    <th onclick="sortTable(2)">Fitted Model (Rp) ↕</th>
+                    <th onclick="sortTable(3)">Selisih (Rp) ↕</th>
+                    <th onclick="sortTable(4)">Error (%) ↕</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data_historis %}
+                <tr data-year="{{ row.bulan_raw[:4] }}">
+                    <td>{{ row.bulan }}</td>
+                    <td class="fw-medium">{{ "{:,.0f}".format(row.aktual).replace(',', '.') }}</td>
+                    <td>{{ "{:,.0f}".format(row.prediksi).replace(',', '.') }}</td>
+                    <td class="{{ 'text-up' if row.selisih > 0 else 'text-down' }}">
+                        {{ "+" if row.selisih > 0 else "" }}{{ row.selisih }}
+                    </td>
+                    <td>{{ row.error_pct }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        renderHistorisChart('historisChart');
+        
+        // Filter logic
+        document.getElementById('year-filter').addEventListener('change', function(e) {
+            const year = e.target.value;
+            const rows = document.querySelectorAll('#historyTable tbody tr');
+            
+            rows.forEach(row => {
+                if (year === 'all' || row.dataset.year === year) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    let sortDir = false;
+    function sortTable(colIdx) {
+        const table = document.getElementById("historyTable");
+        const tbody = table.tBodies[0];
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        
+        sortDir = !sortDir;
+        
+        rows.sort((a, b) => {
+            let valA = a.cells[colIdx].innerText.replace(/[^0-9.-]+/g, "");
+            let valB = b.cells[colIdx].innerText.replace(/[^0-9.-]+/g, "");
+            
+            if(colIdx === 0) { // Bulan is string, parse naive or just leave it
+                valA = a.dataset.year + a.cells[0].innerText;
+                valB = b.dataset.year + b.cells[0].innerText;
+                return sortDir ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            }
+            
+            return sortDir ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
+        });
+        
+        rows.forEach(row => tbody.appendChild(row));
+    }
+</script>
+{% endblock %}

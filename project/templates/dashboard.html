@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3 mb-3 mb-md-0">
+        <div class="custom-card h-100">
+            <div class="card-title-sm">Harga Terakhir</div>
+            <div class="card-value" id="val-aktual">Rp {{ "{:,.0f}".format(aktual).replace(',', '.') }}</div>
+            <small class="text-muted">{{ aktual_month }}</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3 mb-md-0">
+        <div class="custom-card h-100">
+            <div class="card-title-sm">Prediksi Bulan Depan</div>
+            <div class="card-value" id="val-pred">Rp {{ "{:,.0f}".format(pred).replace(',', '.') }}</div>
+            <small class="text-up">↑ +{{ pred_change }}% ({{ pred_month }})</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3 mb-md-0">
+        <div class="custom-card h-100">
+            <div class="card-title-sm">Akurasi Model</div>
+            <div class="card-value">99.95%</div>
+            <small class="text-muted">MAPE: 0.0481%</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="custom-card h-100">
+            <div class="card-title-sm">R² Score</div>
+            <div class="card-value">0.9964</div>
+            <small class="text-muted">Bayesian Ridge</small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main Chart -->
+    <div class="col-lg-8 mb-4 mb-lg-0">
+        <div class="custom-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0 fw-bold">Tren Harga & Prediksi Beras (Rp/kg)</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="btnradio" id="btn1y" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="btn1y">1Y</label>
+                  
+                    <input type="radio" class="btn-check" name="btnradio" id="btn2y" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary" for="btn2y">2Y</label>
+                  
+                    <input type="radio" class="btn-check" name="btnradio" id="btnall" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="btnall">All</label>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- List Prediksi -->
+        <div class="custom-card mb-4">
+            <h5 class="fw-bold mb-3">Prediksi 4 Bulan Ke Depan</h5>
+            <div id="forecast-list">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Mini Predict Form -->
+        <div class="custom-card">
+            <h5 class="fw-bold mb-3">Cek Bulan Spesifik</h5>
+            <form id="predict-form" class="d-flex gap-2 mb-3">
+                <input type="month" id="pred-month" class="form-control" required>
+                <button type="submit" class="btn btn-primary">Cek</button>
+            </form>
+            <div id="pred-result" class="d-none">
+                <div class="p-3 bg-light rounded text-center">
+                    <div class="small text-muted" id="res-month">Bulan</div>
+                    <div class="fs-4 fw-bold text-primary-green" id="res-price">Rp 0</div>
+                    <div class="small text-muted">Estimasi: <span id="res-range"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let mainChart;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Init chart
+        mainChart = renderDashboardChart('mainChart', '2y');
+        
+        // Filter buttons
+        document.getElementById('btn1y').addEventListener('change', () => updateChart('1y'));
+        document.getElementById('btn2y').addEventListener('change', () => updateChart('2y'));
+        document.getElementById('btnall').addEventListener('change', () => updateChart('all'));
+        
+        // Render Forecast List
+        const forecastContainer = document.getElementById('forecast-list');
+        FORECAST_DATA.forEach(d => {
+            const isUp = d.change > 0;
+            const colorClass = isUp ? 'text-up' : 'text-down';
+            const arrow = isUp ? '↑' : '↓';
+            
+            forecastContainer.innerHTML += `
+                <div class="sidebar-item d-flex justify-content-between align-items-center">
+                    <span class="fw-medium">${d.month}</span>
+                    <div class="text-end">
+                        <div class="fw-bold">Rp ${d.price.toLocaleString('id-ID')}</div>
+                        <small class="${colorClass}">${arrow} ${Math.abs(d.change)}%</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Handle Predict Form
+        document.getElementById('predict-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const month = document.getElementById('pred-month').value;
+            if(!month) return;
+            
+            fetch(`/api/predict?month=${month}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('pred-result').classList.remove('d-none');
+                    document.getElementById('res-month').innerText = data.month;
+                    document.getElementById('res-price').innerText = `Rp ${data.predicted.toLocaleString('id-ID')}`;
+                    document.getElementById('res-range').innerText = `Rp ${data.lower.toLocaleString()} - Rp ${data.upper.toLocaleString()}`;
+                });
+        });
+    });
+
+    function updateChart(range) {
+        if(mainChart) mainChart.destroy();
+        mainChart = renderDashboardChart('mainChart', range);
+    }
+</script>
+<style>
+    .text-primary-green { color: var(--primary-green); }
+</style>
+{% endblock %}

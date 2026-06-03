@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="custom-card h-100 bg-light border-0">
+            <h4 class="fw-bold mb-4">Ringkasan Model</h4>
+            <ul class="list-unstyled">
+                <li class="mb-3">
+                    <div class="small text-muted text-uppercase fw-bold">Algoritma</div>
+                    <div class="fs-5">Bayesian Ridge Regression</div>
+                </li>
+                <li class="mb-3">
+                    <div class="small text-muted text-uppercase fw-bold">Periode Training</div>
+                    <div class="fs-5">Jan 2022 - Apr 2026</div>
+                </li>
+                <li class="mb-3">
+                    <div class="small text-muted text-uppercase fw-bold">Hyperparameters</div>
+                    <div class="fs-6"><code>lags: 3</code><br><code>use_rolling: False</code><br><code>tol: 0.0001</code></div>
+                </li>
+                <li class="mb-3">
+                    <div class="small text-muted text-uppercase fw-bold">Data Points</div>
+                    <div class="fs-5">1.543 Hari (Harian agregat)</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="col-lg-8 mb-4">
+        <div class="custom-card h-100">
+            <h5 class="fw-bold mb-3">Metrik Evaluasi Performa</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Metric</th>
+                            <th>Nilai</th>
+                            <th>Arti / Interpretasi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">MAPE</td>
+                            <td class="fs-5 text-primary-green fw-bold">0.0481%</td>
+                            <td>Rata-rata persentase error prediksi. Angka di bawah 1% menunjukkan model SANGAT AKURAT.</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">R² Score</td>
+                            <td class="fs-5 fw-bold">0.9964</td>
+                            <td>Koefisien determinasi. Menunjukkan model mampu menjelaskan 99.64% varian/pergerakan data harga beras.</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">MAE</td>
+                            <td class="fs-5 fw-bold">Rp 7.55</td>
+                            <td>Rata-rata kesalahan absolut dalam Rupiah. Prediksi rata-rata hanya meleset Rp 7 perak.</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">RMSE</td>
+                            <td class="fs-5 fw-bold">Rp 11.72</td>
+                            <td>Root Mean Square Error. Penalti lebih besar untuk error besar; menunjukkan stabilitas yang sangat tinggi.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="custom-card h-100">
+            <h5 class="fw-bold mb-3">Aktual vs Prediksi (12 Bulan Terakhir)</h5>
+            <div class="chart-container-sm">
+                <canvas id="modelFitChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="custom-card h-100">
+            <h5 class="fw-bold mb-3">Feature Importance</h5>
+            <p class="text-muted small">Variabel paling berpengaruh dalam menentukan harga esok hari.</p>
+            <div class="chart-container-sm">
+                <canvas id="featureChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        renderModelChart('modelFitChart');
+        renderFeatureImportance('featureChart');
+    });
+</script>
+{% endblock %}

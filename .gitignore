@@ -1,0 +1,6 @@
+venv_ml/
+__pycache__/
+output/
+.ipynb_checkpoints/
+.DS_Store
+*.zip

@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="custom-card mb-4 text-center py-5">
+            <h2 class="fw-bold mb-3">Simulasi Prediksi Harga Beras</h2>
+            <p class="text-muted mb-4">Pilih bulan di masa depan untuk memprediksi rata-rata harga beras nasional menggunakan model Bayesian Ridge.</p>
+            
+            <form id="main-predict-form" class="d-inline-flex gap-2 mb-4 w-75">
+                <select id="pred-month-main" class="form-select form-control-lg" required>
+                    <option value="" disabled>Pilih Bulan Target...</option>
+                    <option value="2026-03" selected>Maret 2026</option>
+                    <option value="2026-04">April 2026</option>
+                    <option value="2026-05">Mei 2026</option>
+                    <option value="2026-06">Juni 2026</option>
+                    <option value="2026-07">Juli 2026</option>
+                    <option value="2026-08">Agustus 2026</option>
+                    <option value="2026-09">September 2026</option>
+                    <option value="2026-10">Oktober 2026</option>
+                    <option value="2026-11">November 2026</option>
+                    <option value="2026-12">Desember 2026</option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-lg px-4">Hitung Prediksi</button>
+            </form>
+            
+            <hr class="my-4 w-75 mx-auto">
+            
+            <h5 class="fw-bold mb-3">Suntik Data Aktual Baru (Ground Truth)</h5>
+            <p class="small text-muted mb-3 w-75 mx-auto">Jika Anda mengetahui harga asli di bulan tertentu (misal Maret 2026 berbeda dari prediksi), Anda dapat menyuntikkannya ke dalam sistem. Model akan langsung beradaptasi secara dinamis!</p>
+            <form id="inject-form" class="d-inline-flex gap-2 w-75">
+                <select id="inject-month" class="form-select" required>
+                    <option value="" disabled selected>Pilih Bulan...</option>
+                    <option value="2026-03">Maret 2026</option>
+                    <option value="2026-04">April 2026</option>
+                    <option value="2026-05">Mei 2026</option>
+                    <option value="2026-06">Juni 2026</option>
+                    <option value="2026-07">Juli 2026</option>
+                    <option value="2026-08">Agustus 2026</option>
+                </select>
+                <input type="number" id="inject-price" class="form-control" placeholder="Cth: 15750 (tanpa titik)" step="any" required>
+                <button type="submit" class="btn btn-success px-4">Suntik</button>
+            </form>
+        </div>
+        
+        <div id="result-container" class="d-none">
+            <div class="custom-card mb-4 border-primary">
+                <div class="text-center py-4">
+                    <h5 class="text-muted text-uppercase fw-bold mb-2">Hasil Prediksi untuk <span id="res-month-title"></span></h5>
+                    <h1 class="display-4 fw-bold" style="color: var(--primary-green);" id="res-price-main">Rp 0</h1>
+                    <p class="fs-5 text-muted mb-0">Rentang Kepercayaan (95%): <span id="res-range-main" class="fw-medium"></span></p>
+                </div>
+                <div class="row text-center mt-4 border-top pt-3">
+                    <div class="col"><small class="text-muted">Model: Bayesian Ridge</small></div>
+                    <div class="col"><small class="text-muted">Akurasi Historis: 99.95%</small></div>
+                    <div class="col"><small class="text-muted">Lags: 3 Hari</small></div>
+                </div>
+            </div>
+            
+            <div class="custom-card">
+                <h5 class="fw-bold mb-3">Visualisasi Proyeksi</h5>
+                <div class="chart-container-sm">
+                    <canvas id="predSmallChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('main-predict-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const month = document.getElementById('pred-month-main').value;
+        if(!month) return;
+        
+        // Disable button loading state
+        const btn = this.querySelector('button');
+        const origText = btn.innerText;
+        btn.innerText = 'Menghitung...';
+        btn.disabled = true;
+        
+        fetch(`/api/predict?month=${month}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('result-container').classList.remove('d-none');
+                document.getElementById('res-month-title').innerText = data.month;
+                document.getElementById('res-price-main').innerText = `Rp ${data.predicted.toLocaleString('id-ID')}`;
+                document.getElementById('res-range-main').innerText = `Rp ${data.lower.toLocaleString()} - Rp ${data.upper.toLocaleString()}`;
+                
+                // Render Chart
+                renderPrediksiSmallChart('predSmallChart', data);
+                
+                // Reset button
+                btn.innerText = origText;
+                btn.disabled = false;
+            });
+    });
+
+    document.getElementById('inject-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const month = document.getElementById('inject-month').value;
+        const price = document.getElementById('inject-price').value;
+        if(!month || !price) return;
+        
+        const btn = this.querySelector('button');
+        const origText = btn.innerText;
+        btn.innerText = 'Menyuntik...';
+        btn.disabled = true;
+        
+        fetch('/api/add_actual', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({month: month, price: price})
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || data.error);
+            if(!data.error) {
+                // Reload to refresh charts and everything with new data
+                window.location.reload();
+            } else {
+                btn.innerText = origText;
+                btn.disabled = false;
+            }
+        });
+    });
+</script>
+{% endblock %}
