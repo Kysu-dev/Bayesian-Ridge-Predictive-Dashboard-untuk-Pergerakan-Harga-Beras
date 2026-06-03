@@ -6,6 +6,7 @@ import numpy as np
 import datetime
 from dateutil.relativedelta import relativedelta
 import json
+from sklearn.metrics import r2_score, mean_absolute_percentage_error, mean_absolute_error, mean_squared_error
 
 app = Flask(__name__)
 
@@ -24,10 +25,11 @@ monthly_actual = None
 HISTORIS_DATA = []
 actual_js = []
 forecast_js = []
+realtime_metrics = {"mape": 0.0, "r2": 0.0, "akurasi": 0.0}
 months_id = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"]
 
 def load_model_and_data():
-    global model, scaler_X, scaler_y, ts, monthly_actual, HISTORIS_DATA, actual_js, forecast_js
+    global model, scaler_X, scaler_y, ts, monthly_actual, HISTORIS_DATA, actual_js, forecast_js, realtime_metrics
     
     # Load Model
     model = joblib.load(os.path.join(MODEL_DIR, 'bayesian_ridge_model.pkl'))
@@ -62,6 +64,19 @@ def load_model_and_data():
     y_pred = scaler_y.inverse_transform(y_pred_sc.reshape(-1, 1)).ravel()
 
     df_feat['Predicted'] = y_pred
+
+    # Calculate realtime metrics
+    y_true = df_feat['Price'].values
+    mape_val = mean_absolute_percentage_error(y_true, y_pred) * 100
+    r2_val = r2_score(y_true, y_pred)
+    mae_val = mean_absolute_error(y_true, y_pred)
+    rmse_val = np.sqrt(mean_squared_error(y_true, y_pred))
+    
+    realtime_metrics['mape'] = round(mape_val, 4)
+    realtime_metrics['r2'] = round(r2_val, 4)
+    realtime_metrics['akurasi'] = round(100 - mape_val, 2)
+    realtime_metrics['mae'] = round(mae_val, 2)
+    realtime_metrics['rmse'] = round(rmse_val, 2)
 
     # Resample to monthly for dashboard
     monthly_actual = ts['Price'].resample('ME').mean()
@@ -162,7 +177,10 @@ def dashboard():
                           aktual_month=actual_js[-1]['month'],
                           pred=forecast_js[0]['price'],
                           pred_month=forecast_js[0]['month'],
-                          pred_change=forecast_js[0]['change'])
+                          pred_change=forecast_js[0]['change'],
+                          akurasi=realtime_metrics['akurasi'],
+                          mape=realtime_metrics['mape'],
+                          r2=realtime_metrics['r2'])
 
 @app.route('/historis')
 def historis():
@@ -174,7 +192,7 @@ def prediksi():
 
 @app.route('/model')
 def model_info():
-    return render_template('model_info.html')
+    return render_template('model_info.html', metrics=realtime_metrics)
 
 @app.route('/api/predict')
 def api_predict():

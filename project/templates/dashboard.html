@@ -19,14 +19,14 @@
     <div class="col-md-3 mb-3 mb-md-0">
         <div class="custom-card h-100">
             <div class="card-title-sm">Akurasi Model</div>
-            <div class="card-value">99.95%</div>
-            <small class="text-muted">MAPE: 0.0481%</small>
+            <div class="card-value">{{ akurasi }}%</div>
+            <small class="text-muted">MAPE: {{ mape }}%</small>
         </div>
     </div>
     <div class="col-md-3">
         <div class="custom-card h-100">
             <div class="card-title-sm">R² Score</div>
-            <div class="card-value">0.9964</div>
+            <div class="card-value">{{ r2 }}</div>
             <small class="text-muted">Bayesian Ridge</small>
         </div>
     </div>

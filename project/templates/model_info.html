@@ -41,23 +41,23 @@
                     <tbody>
                         <tr>
                             <td class="fw-bold">MAPE</td>
-                            <td class="fs-5 text-primary-green fw-bold">0.0481%</td>
+                            <td class="fs-5 text-primary-green fw-bold">{{ metrics.mape }}%</td>
                             <td>Rata-rata persentase error prediksi. Angka di bawah 1% menunjukkan model SANGAT AKURAT.</td>
                         </tr>
                         <tr>
                             <td class="fw-bold">R² Score</td>
-                            <td class="fs-5 fw-bold">0.9964</td>
-                            <td>Koefisien determinasi. Menunjukkan model mampu menjelaskan 99.64% varian/pergerakan data harga beras.</td>
+                            <td class="fs-5 fw-bold">{{ metrics.r2 }}</td>
+                            <td>Koefisien determinasi. Menunjukkan model mampu menjelaskan varian data yang tinggi.</td>
                         </tr>
                         <tr>
                             <td class="fw-bold">MAE</td>
-                            <td class="fs-5 fw-bold">Rp 7.55</td>
-                            <td>Rata-rata kesalahan absolut dalam Rupiah. Prediksi rata-rata hanya meleset Rp 7 perak.</td>
+                            <td class="fs-5 fw-bold">Rp {{ metrics.mae }}</td>
+                            <td>Rata-rata kesalahan absolut dalam Rupiah. Prediksi rata-rata hanya meleset sebesar nilai ini.</td>
                         </tr>
                         <tr>
                             <td class="fw-bold">RMSE</td>
-                            <td class="fs-5 fw-bold">Rp 11.72</td>
-                            <td>Root Mean Square Error. Penalti lebih besar untuk error besar; menunjukkan stabilitas yang sangat tinggi.</td>
+                            <td class="fs-5 fw-bold">Rp {{ metrics.rmse }}</td>
+                            <td>Root Mean Square Error. Penalti lebih besar untuk error besar; menunjukkan stabilitas.</td>
                         </tr>
                     </tbody>
                 </table>
